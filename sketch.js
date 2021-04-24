@@ -31,9 +31,10 @@ function setup() {
 }
 
 function draw() {
+  
   background(0, 0, 0, 100);
   
-  image(img_city,0,0) ;
+  image(img_city,0,0, img_city.width/2, img_city.height/2) ;
 
   
   var spectrum = fft.analyze(pValue);
@@ -53,7 +54,7 @@ var particle = function(position) {
   this.scale = random(0, 1);
   this.speed = createVector(0, random(0, 3) ); 
   // 떨어지는 속도가 조금 빠른 것 같아서 좀 줄였음.
-  this.color = [random(100, 255), random(50,255), random(0,255), random(100)];
+  this.color = [random(100, 255), random(50,255), random(0,255), random(100,150)];
 } // bokeh 라는 개념이 생각나서 투명도랑 색깔들을 좀 수정
 
 var theyExpand = 3; //Multiplyer 
