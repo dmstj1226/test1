@@ -1,90 +1,74 @@
+var sound;
+
+var fft; //Fast Fourier Transform
+var smoothing = 0.9; 
+var pValue = 1024; 
+var particles =  new Array(pValue);
+
+let img_city ;
+
+function preload(){
+  sound = loadSound('Fire.mp3');
+}
+
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  frameRate(10) ;
+  c = createCanvas(windowWidth, windowHeight);
+  noStroke();
+  sound.play();
+  
+  img_city = loadImage('citypop3.jpg')
+  // 시티팝 배경
+
+  fft = new p5.FFT(smoothing, pValue);
+  fft.setInput(sound);
+
+ for (var i = 0; i < particles.length; i++) {
+    var x = map(i, 0, pValue, 0, width * 2);
+    var y = random(0, height);
+   var position = createVector(x, y);
+    particles[i] = new particle(position);
+  }
 }
 
 function draw() {
-  background(0,0,50);
-  randomSeed(0) ;
-  noFill() ;
-  stroke(255,215,0) ;
-  strokeWeight(4);
+  background(0, 0, 0, 100);
   
-  rect(0,0, windowWidth, windowHeight) ;
-  rect(0,0, 20, 20) ;
-  rect(20,0, 20, 20) ;
-  rect(40,0,20,20) ;
-  rect(0,20,20,20) ;
-  rect(20,20,20,20) ;
-  rect(0,40,20,20) ;
-  // 왼쪽 위 모퉁이
-  
-  rect(0,windowHeight - 20, 20,20) ;
-  rect(20, windowHeight - 20,20,20) ;
-  rect(40,windowHeight - 20, 20, 20) ;
-  rect(0,windowHeight - 40,20,20) ;
-  rect(20, windowHeight - 40, 20,20) ;
-  rect(0, windowHeight - 60, 20, 20) ;
-  // 왼쪽 아래 모퉁이
-  
-  rect(windowWidth - 20,0,20,20) ;
-  rect(windowWidth  - 40, 0, 20, 20) ;
-  rect(windowWidth - 60, 0, 20, 20) ;
-  rect(windowWidth - 20, 20, 20, 20) ;
-  rect(windowWidth - 40 , 20, 20, 20) ;
-  rect(windowWidth - 20 , 40, 20, 20) ;
- // 오른쪽 위 모퉁이
-  
-  rect(windowWidth - 20 , windowHeight - 20 , 20 , 20) ;
-  rect(windowWidth - 40, windowHeight - 20 , 20, 20) ;
-  rect(windowWidth - 60 , windowHeight- 20 , 20 , 20 ) ;
-  rect(windowWidth - 20 , windowHeight - 40 , 20, 20) ;
-  rect(windowWidth - 40 , windowHeight - 40 , 20, 20) ;
-  rect(windowWidth - 20 , windowHeight - 60 , 20, 20) ;
-  // 오른쪽 아래 모퉁이
+  image(img_city,0,0) ;
 
   
-  // 무늬를 넣을 건데 ㄱ 이랑 ㄴ 을 반복해서 그릴 수 있도록... 하려면 필요한 변수는 엑스와 와이 시작점인데 와이는 한 줄 그리는 동안 고정 되어있고 엑스값은 일정한 값으로 늘어나고... 상호작용은 마우스와이 값이 좋을 듯
-  
-  var line_startX ;
-  var line_startY ;
-  var delta = map(mouseX, 0, windowWidth, 10, 100);
-  
-  for (line_startY = 100 ; line_startY < windowHeight / 2 ; line_startY += 20) {
-    for( line_startX = 20 ; line_startX < windowWidth/2 ; line_startX += 10) {
-      strokeWeight(2);
-      stroke(255+mouseX,215+mouseX, mouseX/2) ;
-      line(line_startX, line_startY, line_startX, line_startY + 10);
-      var r = random(0,1) ;
-      if (r > 0.5) {
-        line(line_startX,line_startY, line_startX - delta, line_startY) ;
-       } else {
-         line(line_startX, line_startY+10, line_startX + delta, line_startY+10)
-       }
-    }
-    
-  }
-   // 모음으로 만든 패턴 
-  for (line_startY = windowHeight / 2 + 10 ; line_startY < windowHeight - 10 ; line_startY += 20) {
-    for( line_startX = windowWidth/2 ; line_startX < windowWidth ; line_startX += 10) {
-      strokeWeight(2);
-      line(line_startX, line_startY, line_startX, line_startY + 10);
-      var r = random(0,1) ;
-      if (r > 0.5) {
-        line(line_startX,line_startY+5, line_startX - delta, line_startY+5) ;
-       } else {
-         line(line_startX, line_startY+5, line_startX + delta, line_startY+5)
-         
-       }
-    }
-  }
-  // 해와 달
-  noStroke()
-  fill(255,0,0)
-  ellipse(windowWidth - 300, windowHeight/4, mouseX/3, mouseX/3)
-  fill(255)
-  ellipse(windowWidth/4, windowHeight - 300, mouseY/3, mouseY/3)
-  
-  
+  var spectrum = fft.analyze(pValue);
+  for (var i = 0; i < pValue; i++) {
+    var thisLevel = map(spectrum[i], 0, 255, 0, 1);
 
+   //spectrum
+    particles[i].update( thisLevel );
+    particles[i].draw(); 
+   // particles[i].position.x = map(i, 1, pValue, 0, width * 2);
+  }
 }
+
+
+var particle = function(position) {
+  this.position = position;
+  this.scale = random(0, 1);
+  this.speed = createVector(0, random(0, 3) ); 
+  // 떨어지는 속도가 조금 빠른 것 같아서 좀 줄였음.
+  this.color = [random(100, 255), random(50,255), random(0,255), random(100)];
+} // bokeh 라는 개념이 생각나서 투명도랑 색깔들을 좀 수정
+
+var theyExpand = 3; //Multiplyer 
+
+particle.prototype.update = function(someLevel) {
+  this.position.y += this.speed.y / (someLevel*2);
+  if (this.position.y > height) {
+    this.position.y = 0;
+  }
+  this.diameter = map(someLevel, 0, 1, 0, 30) * this.scale * theyExpand;
+}
+
+particle.prototype.draw = function() {
+  fill(this.color);
+  ellipse(this.position.x, this.position.y,this.diameter, this.diameter);
+}
+
+// 슬라이더 이용해서 색깔이나 배경을 조금씩 다르게 바꾸는 건 어떨까. 시티팝처럼!
